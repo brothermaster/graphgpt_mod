@@ -107,6 +107,9 @@ class TrainingArguments(transformers.TrainingArguments):
     lora_weight_path: str = ""
     lora_bias: str = "none"
     disable_tqdm: bool =False
+    # device = torch.device('cpu')
+    distributed_state = None
+
 
 
 def maybe_zero_3(param, ignore_status=False, name=None):
@@ -764,8 +767,8 @@ def train():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     
-    compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
-
+    # compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+    compute_dtype = torch.bfloat16
     bnb_model_from_pretrained_args = {}
 
     ## load 4 8 bit 
@@ -791,6 +794,7 @@ def train():
         model = GraphLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
+                torch_dtype=compute_dtype,
                 **bnb_model_from_pretrained_args
             ) ## TODO: add real Graph Llama model 
     else:
@@ -867,7 +871,7 @@ def train():
             pretrain_graph_mlp_adapter=model_args.pretrain_graph_mlp_adapter,
             fsdp=training_args.fsdp
         )
-        model.get_graph_tower().to(dtype=torch.float16, device=training_args.device)
+        model.get_graph_tower().to(dtype=compute_dtype, device=training_args.device)
         # graph_config = model_graph_dict['graph_config']
 
         # data_args.graph_token_len = model_graph_dict['graph_token_len']
@@ -933,7 +937,7 @@ def train():
                     tokenizer=tokenizer,
                     args=training_args,
                     **data_module)
-    
+    # print(f"trainer amp:{trainer.amp_dtype}")
     print('************************** parameters: #', sum(p.numel() for p in model.parameters() if p.requires_grad))
     tuned_params = []
     for name, param in model.named_parameters():
