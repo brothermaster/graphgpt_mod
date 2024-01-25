@@ -111,9 +111,10 @@ instruct dataset:
 graph_token: <graph>
 '''
 edge_index = th.from_numpy(edge[['src','dst']].values.T)
-pyg_data = Data(edge_index = edge_index, edge_attr = None, num_nodes = len(vertice))
+pyg_data = Data(graph_node = vertice.values[:,-2:], edge_index = edge_index, edge_attr = None, num_nodes = len(vertice))
 # Data(num_nodes=169343, x=[169343, 128], node_year=[169343, 1], y=[169343, 1], adj_t=[169343, 169343, nnz=1166243], train_mask=[169343], val_mask=[169343], test_mask=[169343], edge_index=[169343, 169343, nnz=2315598])
-
+graph_dict = {dsname:pyg_data}
+th.save(graph_dict,f'./instruct_ds/{dsname}/graph.pt')
 
 cat_ds = {}
 # 遍历任务 使id唯一
