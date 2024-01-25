@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "task_specific",
             "type": "python",
             "request": "launch",
@@ -12,65 +20,89 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
+                // 语言模型
                 "--model_name_or_path",
                 "./vicuna-7b-v1.5-16k",
+                // 版本
                 "--version",
                 "v1",
+                // 文本数据
                 "--data_path",
                 "./data/stage_2/data_all_mix.json",
                 "--graph_content",
                 "./arxiv_ti_ab.json",
+                // 图数据
                 "--graph_data_path",
                 "./graph_data/all_graph_data.pt",
+                // 图编码器
                 "--graph_tower",
                 "clip_gt_arxiv",
+                // 预训练的
                 "--pretrain_graph_mlp_adapter",
                 "./checkpoints/stage_1_projector/stage_1_projector.bin",
+                // 微调投影层
                 "--tune_graph_mlp_adapter",
                 "True",
                 "--graph_select_layer",
                 "-2",
+                // 使用 起始和结束图token
                 "--use_graph_start_end",
+                // 半精度
                 "--bf16",
                 "True",
+                // 模型输出文件夹
                 "--output_dir",
                 "./checkpoints/stage_2",
+                // 训练周期数
                 "--num_train_epochs",
                 "2",
+                // 每个设备样本数
                 "--per_device_train_batch_size",
                 "2",
                 "--per_device_eval_batch_size",
                 "2",
+                // 梯度累加的步数
                 "--gradient_accumulation_steps",
                 "1",
+                // 评估策略 类似保存策略
                 "--evaluation_strategy",
                 "no",
+                // 保存策略
                 "--save_strategy",
                 "steps",
+                // 保存步数
                 "--save_steps",
                 "50000",
+                // 限制固定数量的 检测点
                 "--save_total_limit",
                 "1",
+                // 优化器策略
                 "--learning_rate",
                 "2e-5",
                 "--weight_decay",
                 "0.",
                 "--warmup_ratio",
                 "0.03",
+                // 学习策略
                 "--lr_scheduler_type",
                 "cosine",
+                // 记录步数
                 "--logging_steps",
                 "1",
                 "--tf32",
                 "True",
+                // 最大 tokens 长度
                 "--model_max_length",
                 "2048",
                 "--gradient_checkpointing",
                 "True",
+                // 加载数据进程数
                 "--dataloader_num_workers",
                 "4",
+                // 数据集类型
                 "--lazy_preprocess",
                 "True",
+                // 实验记录方法
                 "--report_to",
                 "wandb"
             ]

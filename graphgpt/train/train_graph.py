@@ -896,8 +896,9 @@ def train():
         # graph_config.use_graph_start_end = training_args.use_graph_start_end = model_args.use_graph_start_end
         training_args.use_graph_start_end = model_args.use_graph_start_end
         model.config.sep_graph_conv_front = data_args.sep_graph_conv_front
+        # 添加图tokens ，并修改模型输入和输出 的词表映射层
         model.initialize_graph_tokenizer(use_graph_start_end=model_args.use_graph_start_end, tokenizer=tokenizer, device=training_args.device,
-                                          tune_graph_mlp_adapter=model_args.tune_graph_mlp_adapter, pretrain_graph_mlp_adapter=model_args.pretrain_graph_mlp_adapter) # 添加图tokens ，并修改模型输入和输出 的此表映射层
+                                          tune_graph_mlp_adapter=model_args.tune_graph_mlp_adapter, pretrain_graph_mlp_adapter=model_args.pretrain_graph_mlp_adapter) 
 
         params_no_grad = [n for n, p in model.named_parameters() if not p.requires_grad]
         if len(params_no_grad) > 0:
