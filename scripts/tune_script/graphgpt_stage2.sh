@@ -1,10 +1,10 @@
 # to fill in the following path to run the second stage of our GraphGPT!
-model_path=
-instruct_ds=
-graph_data_path=
-pretra_gnn=
-tuned_proj=
-output_model=
+model_path=./vicuna-7b-v1.5-16k
+instruct_ds=./data/stage_2/data_all_mix.json
+graph_data_path=./graph_data/all_graph_data.pt
+pretra_gnn=./clip_gt_arxiv
+tuned_proj=./checkpoints/stage_1_projector/stage_1_projector.bin
+output_model=./checkpoints/stage_2
 
 wandb offline
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=4 --master_port=20001 \

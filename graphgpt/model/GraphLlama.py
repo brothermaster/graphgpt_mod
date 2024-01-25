@@ -196,6 +196,7 @@ class GraphLlamaModel(LlamaModel):
                 if type(graph_data) is list:
                     # variable length images
                     graph_node_features = []
+                    # 此处会报错
                     if type(graph_data[0]) is Data:
                         for g in graph_data:
                             # print(g)
@@ -240,9 +241,9 @@ class GraphLlamaModel(LlamaModel):
                         num_patches = cur_graph_features.shape[0]
                         if cur_input_ids[graph_start_token_pos + num_patches + 1] != graph_tower.config.graph_end_token:
                             raise ValueError("The graph end token should follow the graph start token.")
-                        if orig_embeds_params is not None:
+                        if orig_embeds_params is not None: # 拼接 前半部分文本token + 起始图token + 图token + 结束图token + 后半部分文本token
                             cur_new_input_embeds = torch.cat((cur_input_embeds[:graph_start_token_pos].detach(), cur_input_embeds[graph_start_token_pos:graph_start_token_pos+1], cur_graph_features, cur_input_embeds[graph_start_token_pos + num_patches + 1:graph_start_token_pos + num_patches + 2], cur_input_embeds[graph_start_token_pos + num_patches + 2:].detach()), dim=0)
-                        else:
+                        else: # 拼接 前半部分文本token + 图token + 后半部分文本token
                             cur_new_input_embeds = torch.cat((cur_input_embeds[:graph_start_token_pos+1], cur_graph_features, cur_input_embeds[graph_start_token_pos + num_patches + 1:]), dim=0)
                         cur_graph_idx += 1
                     new_input_embeds.append(cur_new_input_embeds)
