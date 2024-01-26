@@ -58,10 +58,11 @@ test_nodes_path = ''
 edge = pd.DataFrame(np.array(
     [[0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,5],
      [1,2,3,4,0,2,3,4,0,1,3,4,1,0,2,4,5]]).T,columns = ['src','dst'])
-vertice = pd.DataFrame(np.array(
-    [[0,1,2,3,4,5,6,7],
-     [1,1,1,1,1,1,1,1],
-     [1,1,1,1,1,1,1,1]]).T,columns = ['id','f1','f2'])
+vertice = pd.DataFrame(
+    np.concatenate([
+        np.arange(7).reshape(7,1),
+        np.random.rand(7,128)],axis=1))
+
 seed_df = pd.DataFrame(
     [
      [0,123,"car",'Is the vertice has a car?',"a:1;b:2",'yes',1],
@@ -111,7 +112,8 @@ instruct dataset:
 graph_token: <graph>
 '''
 edge_index = th.from_numpy(edge[['src','dst']].values.T)
-pyg_data = Data(graph_node = vertice.values[:,-2:], edge_index = edge_index, edge_attr = None, num_nodes = len(vertice))
+x = th.from_numpy(vertice.values[:,1:]).float()
+pyg_data = Data(x = x, edge_index = edge_index, edge_attr = None, num_nodes = len(vertice))
 # Data(num_nodes=169343, x=[169343, 128], node_year=[169343, 1], y=[169343, 1], adj_t=[169343, 169343, nnz=1166243], train_mask=[169343], val_mask=[169343], test_mask=[169343], edge_index=[169343, 169343, nnz=2315598])
 graph_dict = {dsname:pyg_data}
 th.save(graph_dict,f'./instruct_ds/{dsname}/graph.pt')

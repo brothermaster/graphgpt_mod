@@ -110,8 +110,6 @@ class TrainingArguments(transformers.TrainingArguments):
     # device = torch.device('cpu')
     distributed_state = None
 
-
-
 def maybe_zero_3(param, ignore_status=False, name=None):
     from deepspeed import zero
     from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
@@ -495,7 +493,7 @@ def preprocess(
     3. Tokenize the concatenated conversation;
     4. Make a deepcopy as the target. Mask human words with IGNORE_INDEX.
     """
-    if conversation_lib.default_conversation.version == "v1":
+    if conversation_lib.default_conversation.version == "v1":     # 转换对话为 相应格式 v1: 添加前缀和角色 A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed...
         return preprocess_v1(sources, tokenizer)
     if conversation_lib.default_conversation.version == "mpt":
         return preprocess_mpt(sources, tokenizer)
@@ -563,6 +561,12 @@ class LazySupervisedDataset(Dataset):
         return len(self.list_data_dict)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
+        """
+        # 读取每个节点 的样本 sources = [
+        {'id': 节点id,
+         'graph':{'node_idx':中心节点,'edge_index':coo形式边列表,'node_list':[x,x,x,x]}, 
+         'conversations':[{'from':'human','value':promplt text},{'from':'gpt','value':response text}]}]
+        """
         sources = self.list_data_dict[i]
         if isinstance(i, int):
             sources = [sources]
@@ -639,6 +643,7 @@ class LazySupervisedDataset(Dataset):
                 # image does not exist in the data, but the model is multimodal
                 node_feas = self.graph_cfg['graph_processor'].node_feas
                 data_dict['graph_data'] = Data(graph_node = torch.zeros(3, node_feas), edge_index=torch.zeros(2, 3), target_node = torch.tensor([0]))
+        # data_dict = {'input_ids':'','labels':'','graph_data':'','':'','':'','':'',}
         return data_dict
     
 class LazySupervisedDataset_back(Dataset):
@@ -767,8 +772,8 @@ def train():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     
-    # compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
-    compute_dtype = torch.bfloat16
+    compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+    # compute_dtype = torch.bfloat16
     bnb_model_from_pretrained_args = {}
 
     ## load 4 8 bit 

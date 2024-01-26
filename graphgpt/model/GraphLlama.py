@@ -200,6 +200,7 @@ class GraphLlamaModel(LlamaModel):
                     if type(graph_data[0]) is Data:
                         for g in graph_data:
                             # print(g)
+                            g.graph_node = g.graph_node.to(self.dtype)
                             node_forward_out = graph_tower(g)
                             graph_node_features.append(node_forward_out)
                     elif type(graph_data[0]) is dict:
