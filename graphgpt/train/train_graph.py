@@ -65,6 +65,8 @@ class ModelArguments:
 class DataArguments:
     data_path: str = field(default=None,
                            metadata={"help": "Path to the training data."})
+    val_data_path: str = field(default=None,
+                           metadata={"help": "Path to the valuation data."})
     lazy_preprocess: bool = False
     is_graph: bool = False
     sep_graph_conv_front: bool = False
@@ -761,9 +763,19 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                     use_graph_start_end=getattr(data_args, 'use_graph_start_end', False)
                                     ), 
                                     graph_data_path = data_args.graph_data_path)
+    eval_dataset = dataset_cls(tokenizer=tokenizer,
+                                data_path=data_args.val_data_path,
+                                graph_cfg=dict(
+                                    is_graph=data_args.is_graph,
+                                    sep_graph_conv_front=data_args.sep_graph_conv_front,
+                                    graph_token_len=data_args.graph_token_len,
+                                    graph_content=data_args.graph_content,
+                                    use_graph_start_end=getattr(data_args, 'use_graph_start_end', False)
+                                    ), 
+                                    graph_data_path = data_args.graph_data_path)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
     return dict(train_dataset=train_dataset,
-                eval_dataset=None,
+                eval_dataset=eval_dataset,
                 data_collator=data_collator)
 
 def train():
