@@ -103,8 +103,18 @@ class GraphLlamaModel(LlamaModel):
                 clip_graph, args= load_model_pretrained(CLIP, config.pretrain_graph_model_path) 
                 self.graph_tower = graph_transformer(args)
                 self.graph_tower = transfer_param_tograph(clip_graph, self.graph_tower)
+            elif config.graph_tower == "custom_gt":
+                assert osp.exists(osp.join(config.pretrain_graph_model_path, 'config.json')), 'config.json missing'
+                with open(osp.join(config.pretrain_graph_model_path, 'config.json'), 'r') as f:
+                    config_dict = json.load(f)
+                args = GraphPretrainConfig(config_dict)
+                self.graph_tower = graph_transformer(args)
 
-            
+                for m in self.graph_tower.modules():  
+                    if isinstance(m, nn.Linear): 
+                        torch.nn.init.normal_(m.weight, mean=0, std=1)  
+                        if getattr(m,"bias") is not None:
+                            torch.nn.init.zeros_(m.bias)
 
             # self.vision_tower = CLIPVisionModel.from_pretrained(config.mm_vision_tower)
 
@@ -118,7 +128,9 @@ class GraphLlamaModel(LlamaModel):
         return graph_tower
 
     def initialize_graph_modules(self, graph_tower, graph_select_layer,
-                                  pretrain_graph_mlp_adapter=None, fsdp=None): # TODO: modify this function
+                                  pretrain_graph_mlp_adapter=None,
+                                  pretrain_gnn_adapter=None,
+                                  fsdp=None): # TODO: modify this function
         self.config.graph_tower = graph_tower
 
 
@@ -143,6 +155,18 @@ class GraphLlamaModel(LlamaModel):
                 clip_graph, args= load_model_pretrained(CLIP, self.config.pretrain_graph_model_path) 
                 graph_tower = graph_transformer(args)
                 graph_tower = transfer_param_tograph(clip_graph, graph_tower)
+            elif self.config.graph_tower == "custom_gt":
+                assert osp.exists(osp.join(self.config.pretrain_graph_model_path, 'config.json')), 'config.json missing'
+                with open(osp.join(self.config.pretrain_graph_model_path, 'config.json'), 'r') as f:
+                    config_dict = json.load(f)
+                args = GraphPretrainConfig(config_dict)
+                graph_tower = graph_transformer(args)
+
+                for m in graph_tower.modules():  
+                    if isinstance(m, nn.Linear): 
+                        torch.nn.init.normal_(m.weight, mean=0, std=1)  
+                        if getattr(m,"bias") is not None:
+                            torch.nn.init.zeros_(m.bias)
         else:
             graph_tower = self.graph_tower
         graph_tower.requires_grad_(False)
@@ -162,7 +186,10 @@ class GraphLlamaModel(LlamaModel):
 
         if pretrain_graph_mlp_adapter is not None:
             graph_projector_weights = torch.load(pretrain_graph_mlp_adapter, map_location='cpu')
-            self.graph_projector.load_state_dict({k.split('.')[-1]: v for k, v in graph_projector_weights.items()})
+            self.graph_projector.load_state_dict({k.split('.')[-1]: v for k, v in graph_projector_weights.items() if "graph_projector" in k})
+
+            if pretrain_gnn_adapter is not None:
+                self.graph_tower.load_state_dict({".".join(k.split('.')[2:]): v for k, v in graph_projector_weights.items() if "graph_tower" in k})
 
     def forward(
         self,

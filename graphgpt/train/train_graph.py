@@ -21,6 +21,8 @@ import json
 import logging
 import pathlib
 from typing import Dict, Optional, Sequence, List
+import numpy as np
+import evaluate
 
 import torch
 
@@ -59,7 +61,10 @@ class ModelArguments:
     pretrain_graph_mlp_adapter: Optional[str] = field(default=None)
     use_graph_start_end: bool = field(default=False)
     pretrain_graph_model_path:Optional[str] = field(default="./")
-
+    tune_graph_tower: bool = field(default=False)
+    # gt_layers, att_d_model, gnn_input, gnn_output, att_norm， head，if_pos
+    # gnn_input: int = 109   # GNN 输入特征数
+    # gt_layers: int = 2   # GNN层数
 
 @dataclass
 class DataArguments:
@@ -881,11 +886,15 @@ def train():
         tokenizer.pad_token = tokenizer.unk_token
         conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1_1"]
 
+
     if model_args.graph_tower is not None:
+        # 判断是否训练 GNN：首先根据tune_graph_tower，否则根据是否为"custom_gt" 判断
+        tune_graph_tower = True if model_args.tune_graph_tower else model_args.graph_tower == "custom_gt"
         model_graph_dict = model.get_model().initialize_graph_modules(
             graph_tower=model_args.graph_tower,
             graph_select_layer=model_args.graph_select_layer,
             pretrain_graph_mlp_adapter=model_args.pretrain_graph_mlp_adapter,
+            pretrain_gnn_adapter=tune_graph_tower,
             fsdp=training_args.fsdp
         )
         model.get_graph_tower().to(dtype=compute_dtype, device=training_args.device)
@@ -900,6 +909,10 @@ def train():
             model.requires_grad_(False)
             for p in model.get_model().graph_projector.parameters():
                 p.requires_grad = True
+        if tune_graph_tower:
+            # 设置GNN 为可训练参数
+            for p in model.get_model().graph_tower.parameters():
+                p.requires_grad = True
 
         model.config.freeze_graph_mlp_adapter = training_args.freeze_graph_mlp_adapter
         if training_args.freeze_graph_mlp_adapter:
@@ -913,7 +926,7 @@ def train():
         # graph_config.use_graph_start_end = training_args.use_graph_start_end = model_args.use_graph_start_end
         training_args.use_graph_start_end = model_args.use_graph_start_end
         model.config.sep_graph_conv_front = data_args.sep_graph_conv_front
-        # 添加图tokens ，并修改模型输入和输出 的词表映射层
+        # 添加图tokens ，并修改模型输入和输出 的词表映射层 （此处设置embed_tokens为可训练）
         model.initialize_graph_tokenizer(use_graph_start_end=model_args.use_graph_start_end, tokenizer=tokenizer, device=training_args.device,
                                           tune_graph_mlp_adapter=model_args.tune_graph_mlp_adapter, pretrain_graph_mlp_adapter=model_args.pretrain_graph_mlp_adapter) 
 
@@ -951,18 +964,37 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
+    # 使用自定义评估指标 
+    metric = evaluate.load("accuracy")
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        predictions = np.argmax(logits, axis=-1)
+        # 忽略 非预测点 IGNORE_INDEX
+        labels_ig = labels==IGNORE_INDEX # 定位标签中忽略的点
+        predictions = predictions[~labels_ig] # 取出预测点中非忽略点
+        labels = labels[~labels_ig] # 取出标签中非忽略点
+        labels = labels.flatten().tolist()
+        predictions = predictions.flatten().tolist()
+        return metric.compute(predictions=predictions, references=labels)
+
     trainer = GraphChatTrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
+                    compute_metrics=compute_metrics,
                     **data_module)
-    # print(f"trainer amp:{trainer.amp_dtype}")
+
     print('************************** parameters: #', sum(p.numel() for p in model.parameters() if p.requires_grad))
     tuned_params = []
     for name, param in model.named_parameters():
         if param.requires_grad:
             tuned_params.append(name)
-    print(tuned_params)
-
+    # 原始可调参数 model.graph_projector.weight，model.graph_projector.bias  model.embed_tokens.weight (不含)，
+    # 当前可调节参数名
+    [print(i) for i in tuned_params]
+    print("设置GNN为可训练后增加可调参数" ,
+          sum(p.numel() for n,p in model.named_parameters() if p.requires_grad ) - 
+          sum(p.numel() for n,p in model.named_parameters() if p.requires_grad and 'graph_tower' not in n))
+    
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
     else:

@@ -1,0 +1,11 @@
+{
+      "gnn_input": 109, 
+      "gnn_output": 128, 
+
+      "gt_layers": 2, 
+      "att_d_model": 128, 
+      "att_norm": true, 
+      "head": 8, 
+      "if_pos": false
+  }
+  

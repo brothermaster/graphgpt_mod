@@ -16,7 +16,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    keys_to_match = ['graph_projector', 'embed_tokens', 'transformer.wte']
+    keys_to_match = ['graph_projector', 'embed_tokens', 'transformer.wte', 'graph_tower']
     ckpt_to_key = defaultdict(list)
     try:
         model_indices = json.load(open(os.path.join(args.model_name_or_path, 'pytorch_model.bin.index.json')))

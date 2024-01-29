@@ -28,23 +28,24 @@
                 "v1",
                 // 文本数据
                 "--data_path",
-                "./data/stage_2/data_all_mix.json",
-                "--graph_content",
-                "./arxiv_ti_ab.json",
+                "./instruct_ds/addtasks/pretrain_income-car_train.json",
+                "--val_data_path",
+                "./instruct_ds/addtasks/pretrain_income-car_val.json",
                 // 图数据
                 "--graph_data_path",
-                "./graph_data/all_graph_data.pt",
+                "./instruct_ds/addtasks/graph.pt",
                 // 图编码器
                 "--graph_tower",
-                "clip_gt_arxiv",
+                "custom_gt",
+
                 // 预训练的
                 "--pretrain_graph_mlp_adapter",
                 "./checkpoints/stage_1_projector/stage_1_projector.bin",
                 // 微调投影层
                 "--tune_graph_mlp_adapter",
                 "True",
-                "--graph_select_layer",
-                "-2",
+                "--tune_graph_tower",
+                "True",
                 // 使用 起始和结束图token
                 "--use_graph_start_end",
                 // 半精度
@@ -66,7 +67,9 @@
                 "1",
                 // 评估策略 类似保存策略
                 "--evaluation_strategy",
-                "no",
+                "steps",
+                "--eval_steps",
+                "1",
                 // 保存策略
                 "--save_strategy",
                 "steps",
@@ -76,6 +79,11 @@
                 // 限制固定数量的 检测点
                 "--save_total_limit",
                 "1",
+                // 训练结束保存最佳模型
+                "--load_best_model_at_end",
+                // 评估最佳模型 load_best_model_at_end为True 且不指定指标时 使用loss作为指标
+                "--metric_for_best_model",
+                "eval_loss",
                 // 优化器策略
                 "--learning_rate",
                 "2e-5",
@@ -90,7 +98,7 @@
                 "--logging_steps",
                 "1",
                 "--tf32",
-                "True",
+                "False",
                 // 最大 tokens 长度
                 "--model_max_length",
                 "2048",
@@ -142,7 +150,8 @@
                 "--graph_data_path",
                 "./instruct_ds/addtasks/graph.pt",
                 "--graph_tower",
-                "clip_gt_arxiv",
+                "custom_gt",
+                "--tune_graph_tower",
                 "--tune_graph_mlp_adapter",
                 "True",
                 "--graph_select_layer",
@@ -165,7 +174,7 @@
                 "--evaluation_strategy",
                 "steps",
                 "--eval_steps",
-                "500",
+                "1",
                 "--save_strategy",
                 "steps",
                 "--save_steps", //是 eval_steps的整数倍
@@ -186,7 +195,7 @@
                 "--lr_scheduler_type",
                 "cosine",
                 "--logging_steps",
-                "4",
+                "1",
                 "--tf32",
                 "False",
                 "--model_max_length",
@@ -196,7 +205,7 @@
                 "--lazy_preprocess",
                 "True",
                 "--report_to",
-                "wandb"
+                "tensorboard"
             ]
         }
     ]

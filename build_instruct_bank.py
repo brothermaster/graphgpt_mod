@@ -61,7 +61,7 @@ edge = pd.DataFrame(np.array(
 vertice = pd.DataFrame(
     np.concatenate([
         np.arange(7).reshape(7,1),
-        np.random.rand(7,128)],axis=1))
+        np.random.rand(7,109)],axis=1))
 
 seed_df = pd.DataFrame(
     [
