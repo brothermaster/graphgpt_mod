@@ -11,7 +11,7 @@
 # 答：已修改
 
 # 确认验证集上的指标如何计算，一步计算？生成式计算？（逐步debug找到相关位置）
-# 答：一步计算
+# 答：一步计算 计算所有样本
 
 # 测试传入服务器的docker镜像是否可用
 
@@ -19,6 +19,9 @@
 
 # graph transformer 输入特征维度与 当前数据不同，如何修改？
 # 答：不是用预训练对齐的GNN，使用未训练的GNN，预训练阶段 同时调整 GNN + GNN_PROJ。而zero-shots 和 few-shots 仅调整GNN_PROJ
+
+# Trainer 如何采样数据
+# 答：随机采样
 
 from graphgpt.train.train_graph import train
 

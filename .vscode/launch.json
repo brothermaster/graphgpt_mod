@@ -5,6 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "nshots",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--model-name",
+                "/workspace/graphgpt_mod/checkpoints/stage_1",
+                "--prompting_file",
+                "/workspace/graphgpt_mod/instruct_ds/addtasks/pretrain_car_train.json",
+                "--graph_data_path",
+                "/workspace/graphgpt_mod/instruct_ds/addtasks/graph.pt",
+                "--output_res_path",
+                "/workspace/graphgpt_mod/output/addtasks",
+                "--num_gpus",
+                "1"
+            ]
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
@@ -37,7 +57,6 @@
                 // 图编码器
                 "--graph_tower",
                 "custom_gt",
-
                 // 预训练的
                 "--pretrain_graph_mlp_adapter",
                 "./checkpoints/stage_1_projector/stage_1_projector.bin",
