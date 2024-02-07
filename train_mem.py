@@ -23,6 +23,10 @@
 # Trainer 如何采样数据
 # 答：随机采样
 
+# lm_head 也是继承的预训练参数
+
+# 替换GAT为 PyG版本，直接使用T5
+
 from graphgpt.train.train_graph import train
 
 if __name__ == "__main__":

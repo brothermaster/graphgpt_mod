@@ -224,7 +224,7 @@
                 "--lazy_preprocess",
                 "True",
                 "--report_to",
-                "tensorboard"
+                "tensorboard",
             ]
         }
     ]

@@ -187,8 +187,8 @@ def eval_model(args, prompt_file,start_idx=0):
         # print(outputs)
 
         res_data.append({"id": instruct_item["id"], "node_idx": instruct_item["graph"]["node_idx"], "res": outputs}.copy())
-        with open(osp.join(args.output_res_path, f'{args.prompting_file}_{start_idx}.json'), "w") as fout:
-            json.dump(res_data, fout, indent=4)
+    with open(osp.join(args.output_res_path, f'{args.prompting_file}_{start_idx}.json'), "w") as fout:
+        json.dump(res_data, fout)
     return res_data
     # with open(args.output_res_path, "w") as fout:
     #     json.dump(res_data, fout, indent=4)
