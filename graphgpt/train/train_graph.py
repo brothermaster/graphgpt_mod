@@ -22,7 +22,7 @@ import logging
 import pathlib
 from typing import Dict, Optional, Sequence, List
 import numpy as np
-import evaluate
+# import evaluate
 
 import torch
 
@@ -816,7 +816,7 @@ def train():
         model = GraphLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
-                torch_dtype=compute_dtype,
+                # torch_dtype=compute_dtype,
                 **bnb_model_from_pretrained_args
             ) ## TODO: add real Graph Llama model 
     else:
@@ -897,7 +897,7 @@ def train():
             pretrain_gnn_adapter=tune_graph_tower,
             fsdp=training_args.fsdp
         )
-        model.get_graph_tower().to(dtype=compute_dtype, device=training_args.device)
+        # model.get_graph_tower().to(dtype=compute_dtype, device=training_args.device)
         # graph_config = model_graph_dict['graph_config']
 
         # data_args.graph_token_len = model_graph_dict['graph_token_len']
@@ -965,22 +965,22 @@ def train():
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
     # 使用自定义评估指标 
-    metric = evaluate.load("accuracy")
-    def compute_metrics(eval_pred):
-        logits, labels = eval_pred
-        predictions = np.argmax(logits, axis=-1)
-        # 忽略 非预测点 IGNORE_INDEX
-        labels_ig = labels==IGNORE_INDEX # 定位标签中忽略的点
-        predictions = predictions[~labels_ig] # 取出预测点中非忽略点
-        labels = labels[~labels_ig] # 取出标签中非忽略点
-        labels = labels.flatten().tolist()
-        predictions = predictions.flatten().tolist()
-        return metric.compute(predictions=predictions, references=labels)
+    # metric = evaluate.load("accuracy")
+    # def compute_metrics(eval_pred):
+    #     logits, labels = eval_pred
+    #     predictions = np.argmax(logits, axis=-1)
+    #     # 忽略 非预测点 IGNORE_INDEX
+    #     labels_ig = labels==IGNORE_INDEX # 定位标签中忽略的点
+    #     predictions = predictions[~labels_ig] # 取出预测点中非忽略点
+    #     labels = labels[~labels_ig] # 取出标签中非忽略点
+    #     labels = labels.flatten().tolist()
+    #     predictions = predictions.flatten().tolist()
+    #     return metric.compute(predictions=predictions, references=labels)
 
-    trainer = GraphChatTrainer(model=model,
+    trainer = transformers.Trainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
-                    compute_metrics=compute_metrics,
+                    # compute_metrics=compute_metrics,
                     **data_module)
 
     print('************************** parameters: #', sum(p.numel() for p in model.parameters() if p.requires_grad))

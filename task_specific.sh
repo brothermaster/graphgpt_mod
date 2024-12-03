@@ -1,0 +1,37 @@
+python -m torch.distributed.run --nnodes=1 --nproc_per_node=1 --master_port=20001 \
+    train_mem.py \
+    --model_name_or_path ./vicuna-7b-v1.5-16k \
+    --version v1 \
+    --data_path ./instruct_ds/addtasks/pretrain_income-car_train.json \
+    --val_data_path ./instruct_ds/addtasks/pretrain_income-car_val.json \
+    --graph_data_path ./instruct_ds/addtasks/graph.pt \
+    --graph_tower custom_gt \
+    --pretrain_graph_mlp_adapter ./checkpoints/stage_1_projector/stage_1_projector.bin \
+    --tune_graph_mlp_adapter True \
+    --tune_graph_tower True \
+    --use_graph_start_end \
+    --fp16 True \
+    --output_dir ./checkpoints/stage_2 \
+    --num_train_epochs 2 \
+    --per_device_train_batch_size 2 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 1 \
+    --evaluation_strategy steps \
+    --eval_steps 1 \
+    --save_strategy steps \
+    --save_steps 50000 \
+    --save_total_limit 1 \
+    --load_best_model_at_end \
+    --metric_for_best_model eval_loss \
+    --learning_rate 2e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type cosine \
+    --logging_steps 1 \
+    --tf32 False \
+    --model_max_length 2048 \
+    --gradient_checkpointing True \
+    --dataloader_num_workers 4 \
+    --lazy_preprocess True \
+    --report_to wandb \
+    --deepspeed ds_config.json
